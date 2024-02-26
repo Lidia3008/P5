@@ -1,0 +1,143 @@
+
+let angle = 0;
+let radius = 30;
+let circleCount = 10;
+let spee = 0.09
+let fishMouthX, fishMouthY;
+let headDiameter = 90
+let target_yOffset;
+let yOffset;
+let vertebraeSize = 20;
+
+function setup() {
+  createCanvas(800, 800);
+	fishMouthX = width/2;
+	fishMouthY = height/2;
+	target_yOffset = sin(70);
+	yOffset = sin(70);
+	textAlign(CENTER, CENTER);
+	
+}
+
+function draw() {
+  background(220);
+	fishMouthX += (spee*10)*(spee*10)
+	if (fishMouthX > 1.25*width){
+		fishMouthX = -1
+	}
+	text( "click to make fish swim fast", width/2, height/5);
+
+  // Draw the circles
+  noStroke();
+  fill(255, 255, 255, 200);
+  for (let i = 0; i < circleCount; i++) {
+    let x = fishMouthX - i * vertebraeSize;
+    let y = fishMouthY - radius * sin(angle + i * 0.2);
+    if (i>8){
+			fill(255, 255, 255, 0);
+		}
+		ellipse(x, y, vertebraeSize-(i), vertebraeSize-(i));
+		
+  }
+	
+	// Draw the fish head
+	fill(240,110,0, 200);
+	let headRadius = headDiameter/2
+	let headCenterX = fishMouthX-(headRadius)+(vertebraeSize/2)
+	let headCenterY = fishMouthY - radius * sin(angle + 1 * 0.2)
+	
+  ellipse(headCenterX, headCenterY, headDiameter+18, headDiameter);
+  
+	//draw the body
+	draw6PointShape(headCenterX-(headRadius/10), headCenterY-headRadius,
+									fishMouthX - 4 * vertebraeSize, headCenterY-headRadius,
+									fishMouthX - 8 * vertebraeSize, fishMouthY - radius * sin(angle + 8 * 0.2),
+									fishMouthX - 4 * vertebraeSize, headCenterY+headRadius,
+									headCenterX-(headRadius/10), headCenterY+headRadius,
+								 	headCenterX-(headRadius/2), headCenterY);
+	//draw the tails
+	let tailWidth = 35;
+
+	
+	draw5PointShape(fishMouthX - 7 * vertebraeSize, fishMouthY - radius * sin(angle + 7 * 0.2) + 0.5,
+					fishMouthX - 8.5 * vertebraeSize, (fishMouthY - 1.1*radius * sin(angle + 8 * 0.2))-vertebraeSize*2,
+					fishMouthX - 8.8 * vertebraeSize, (fishMouthY - 1.4*radius * sin(angle + 7.5 * 0.2)),
+					 fishMouthX - 8.5 * vertebraeSize, (fishMouthY - 1.1*radius * sin(angle + 8 * 0.2))+vertebraeSize*2,
+					 fishMouthX - 7 * vertebraeSize, fishMouthY - radius * sin(angle + 7 * 0.2) + 0.5,
+					);
+
+	
+	//print( "tail:", tailEndCenter1)
+	//makes the fins ease in and out of flapping and resting
+	let easing = 1;
+	
+	if (spee <= 0.07){
+		target_yOffset = 0.8 + sin(angle)/9;
+		easing = 0.045
+	}
+	else{ //flappy fins
+		target_yOffset = sin(-1+(angle));
+		easing = 0.095;
+	}
+	//print(sin(angle))
+	yOffset = lerp(yOffset, target_yOffset, easing)
+	
+	vert5y = fishMouthY - radius * sin(angle + 6 * 0.2);
+	//draw the fins
+	draw4PointShape(getVertX(2)-20, headCenterY-headRadius + 22,
+					getVertX(4), headCenterY-headRadius - (headRadius/1.5)*yOffset, // tip1
+					 getVertX(3.2), headCenterY-headRadius - (headRadius/1.5)*yOffset + 5, // tip2
+					 headCenterX+10, headCenterY-headRadius + 10,
+					);
+	draw4PointShape(getVertX(2)-20, headCenterY+headRadius - 22,
+					getVertX(4), headCenterY+headRadius + (headRadius/1.5)*yOffset, // tip
+					 getVertX(3.2), headCenterY+headRadius + (headRadius/1.5)*yOffset - 5, // tip2
+					 headCenterX+(headRadius/2.5), headCenterY+headRadius - 10,
+					);
+	
+
+  // Update the angle
+  angle += spee;
+	if (spee > 0.07){
+		spee-= 0.001;
+	}
+	if (radius > 10){
+		radius -=0.2;
+	}
+
+}
+
+function getVertX(vertNumber){
+	return fishMouthX - vertNumber * vertebraeSize
+}
+function mouseClicked() {
+  // This function will be called whenever the mouse is clicked
+  spee = 0.3
+	radius = 60
+}
+
+function draw5PointShape(x1, y1, x2, y2, x3, y3, x4, y4, x5, y5) {
+  beginShape();
+  vertex(x1, y1);
+  quadraticVertex(x2, y2, x3, y3);
+  quadraticVertex(x4, y4, x5, y5);
+  endShape(CLOSE);
+}
+function draw6PointShape(x1, y1, x2, y2, x3, y3, x4, y4, x5, y5, x6, y6) {
+  beginShape();
+  vertex(x1, y1);
+  quadraticVertex(x2, y2, x3, y3);
+  quadraticVertex(x4, y4, x5, y5);
+	quadraticVertex(x6, y6, x1, y1);
+  endShape(CLOSE);
+}
+
+function draw4PointShape(x1, y1, x2, y2, x3, y3, x4, y4) {
+  beginShape();
+  vertex(x1, y1);
+  quadraticVertex(x2, y2, x3, y3);
+  quadraticVertex(x4, y4, x1, y1);
+  endShape(CLOSE);
+}
+
+
