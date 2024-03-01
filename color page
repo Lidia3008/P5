@@ -1,0 +1,314 @@
+/*
+ ________  ________  ___       __   ___  ___  ________  ___       __   ________     
+|\   __  \|\   __  \|\  \     |\  \|\  \|\  \|\   __  \|\  \     |\  \|\_____  \    
+\ \  \|\ /\ \  \|\  \ \  \    \ \  \ \  \\\  \ \  \|\  \ \  \    \ \  \\|___/  /|   
+ \ \   __  \ \  \\\  \ \  \  __\ \  \ \   __  \ \  \\\  \ \  \  __\ \  \   /  / /   
+  \ \  \|\  \ \  \\\  \ \  \|\__\_\  \ \  \ \  \ \  \\\  \ \  \|\__\_\  \ /  /_/__  
+   \ \_______\ \_______\ \____________\ \__\ \__\ \_______\ \____________\\________\
+    \|_______|\|_______|\|____________|\|__|\|__|\|_______|\|____________|\|_______|
+                                                                                    
+ 
+'bowhowz'
+
+Originally written for the Genguary 2024 Jan 18 prompt "Bauhaus".
+
+I loved the original I came up with https://openprocessing.org/sketch/2149233 but found it flat and too chaotic in the lines.
+
+This rework uses the p5.patgrad library https://github.com/antiboredom/p5.patgrad for easy-peasy liner gradients.
+
+Code is a bloody mess as it is a fork of my Genuary panic code....
+
+LMB regenerates, RMB saves the image.
+
+@cartocopia 2024-02-03
+
+"The genuary topic you wish you’d spent a week on 📅 #WCCChallenge"
+
+*/
+
+
+let palettes = [
+	["#08101a", "#fdf9ed", "#f9a30e", "#ff9983", "#006aab", "#71878c", "#d2d4c9"],
+	["#1a0f12", "#fef9e3", "#f3a600", "#cb452b", "#126da1", "#988875", "#dcc4a2"],
+	["#080c0f", "#fffae6", "#faad01", "#fe8700", "#2f4a50", "#cc2a1f", "#79adb4"],
+	["#032133", "#fef2c8", "#f8cc81", "#fe8700", "#265875", "#6b98a5", "#d7b079", "#fffae6"],
+	["#010a17", "#fef4d9", "#f4bc5a", "#945e27", "#6d4c2c", "#b36f36", "#374852", "#fdf9ed"],
+]
+let palette;
+let gridx;
+let gridy;
+let xm;
+let ym;
+let fc;
+let stage = 0;
+let stagecounter = 0;
+
+let gradient;
+let textureimage;
+
+function setup() {
+	createCanvas(s = 2 * floor(min(windowWidth, windowHeight) / 2), s);
+	smooth();
+	palette = random(palettes);
+	gridx = random(width / 50, width / 20);
+	gridy = random(height / 50, height / 20);
+	xm = floor(width / gridx);
+	ym = floor(height / gridy);
+	background(palette[1]);
+	stage = 0;
+	stagecounter = 0;
+}
+
+function draw() {
+
+	switch (stage) {
+		case 0: //base shapes
+			if (stagecounter > 25) {
+				stagecounter = 0;
+				stage++;
+			} else {
+				tiles();
+			}
+			break;
+
+		case 1: // big circle shadow
+			push();
+			translate(width / 2, height / 2);
+			noFill();
+
+			stroke(0, 0, 0, 5);
+			for (let i = 0; i < 10; i++) {
+				strokeWeight(0.6 * width + i * 3);
+				circle(0, 0, width * sqrt(2));
+			}
+
+			stagecounter = 0;
+			stage++;
+			pop();
+			break;
+
+		case 2: // more base shapes
+			if (stagecounter > 25) {
+				stagecounter = 0;
+				stage++;
+			} else {
+				tiles();
+			}
+			break;
+
+		case 3: // clean the maskedge with a big circle
+			push();
+			translate(width / 2, height / 2);
+			noFill();
+
+			stroke(0, 0, 0, 10);
+			strokeWeight(0.6 * width + 3);
+			circle(0, 0, width * sqrt(2));
+
+			gradient = createLinearGradient(random(HALF_PI) + PI / 4, sqrt(sq(width / 2) + sq(height / 2)));
+			gradient.colors(0, color(palette[1]), 1, lerpColor(color(palette[1]), color(palette[0]), 0.2));
+			strokeGradient(gradient);
+			strokeWeight(0.6 * width);
+
+			circle(0, 0, width * sqrt(2));
+			stagecounter = 0;
+			stage++;
+			pop();
+			break;
+
+		case 4: // horizontal and vertical lines
+			if (stagecounter > max(xm, ym)) {
+				stagecounter = 0;
+				stage++;
+			} else {
+				lines();
+			}
+			break;
+
+		case 5: //small circles
+			if (stagecounter > randomGaussian(20, 5)) {
+				stagecounter = 0;
+				stage++;
+			} else {
+				circles();
+			}
+			break;
+
+		case 6: // texture
+			textureimage = granulate(20);
+			blendMode(OVERLAY);
+			image(textureimage, 0, 0, width, height);
+			stage++;
+			break;
+			
+		default:
+	}
+
+	stagecounter++;
+}
+
+function tiles() {
+	push();
+	ellipseMode(CORNER);
+	rectMode(CORNER)
+	let c = random(palette);
+	fill(c);
+	stroke(c);
+	strokeWeight(0.5); // because of bad alignment
+
+	noStroke();
+
+	let w = floor(random(1, xm * 0.7));
+	let h = floor(random(1, ym * 0.7 - w));
+	let x = floor(random(1, xm - w));
+	let y = floor(random(1, ym - h));
+
+	x *= gridx;
+	y *= gridy;
+	w *= gridx;
+	h *= gridy;
+
+
+	if (random(1) < 0.8) { // amount of rect vs circles
+
+		if (random(1) < 0.5) {
+			gradient = createLinearGradient(0, w);
+		} else {
+			gradient = createLinearGradient(HALF_PI, h);
+		}
+		gradient.colors(0, lerpColor(color(c), color(255), 0.2), 0.5, c, 1, lerpColor(color(c), color(0), 0.3));
+		if (random(1) < 2 / 3) {
+			fillGradient(gradient);
+			strokeGradient(gradient);
+		}
+		push();
+		translate(x, y);
+		rect(0, 0, w, h);
+		pop();
+	} else {
+		if (random(1) < 0.5) {
+			gradient = createLinearGradient(0, min(w, h));
+		} else {
+			gradient = createLinearGradient(HALF_PI, min(w, h));
+		}
+		gradient.colors(0, lerpColor(color(c), color(255), 0.2), 0.5, c, 1, lerpColor(color(c), color(0), 0.3));
+		if (random(1) < 2 / 3) {
+			fillGradient(gradient);
+		}
+		push();
+		translate(x, y);
+		circle(0, 0, min(w, h));
+		pop();
+	}
+	pop();
+}
+
+
+function lines() {
+	push();
+	strokeCap(ROUND);
+	noFill();
+
+	//horizontal
+	let sw = floor(random(2, 4)) * 2;
+	let pindex = floor(random(2));
+	let dd = random(1) < 0.3333;
+	let x1 = stagecounter;
+	let y1 = floor(random(max(xm, ym)));
+	let x2 = stagecounter;
+	let y2 = floor(random(max(xm, ym)));
+	let od = random(1) < 0.1;
+	if (random(1) < 0.5) {
+		oneline(x1, y1, x2, y2, sw, 1 - pindex, dd, 2, od);
+	}
+	oneline(x1, y1, x2, y2, sw, pindex, dd, 0, od);
+
+	//vertical
+	sw = floor(random(2, 4)) * 2;
+	pindex = floor(random(2));
+	dd = random(1) < 0.3;
+	x1 = floor(random(max(xm, ym)));
+	y1 = stagecounter;
+	x2 = floor(random(max(xm, ym)));
+	y2 = stagecounter;
+	if (random(1) < 0.5) {
+		oneline(x1, y1, x2, y2, sw, 1 - pindex, dd, 2, od);
+	}
+	oneline(x1, y1, x2, y2, sw, pindex, dd, 0, od);
+
+	pop();
+}
+
+function oneline(x1, y1, x2, y2, s, p, d, o, od) { // x1,y1,x2,y2,stroke weight,palette index,draw dots, offset, only dots
+	strokeWeight(s);
+	stroke(palette[p]);
+	x1 = x1 * gridx + o;
+	y1 = y1 * gridy + o;
+	x2 = x2 * gridx + o;
+	y2 = y2 * gridy + o;
+
+	if (dist(x1, y1, width / 2, height / 2) < width * 0.47 && dist(x2, y2, width / 2, height / 2) < width * 0.47) {
+		if (!od) {
+			if (dist(x1, y1, x2, y2) == 0) {
+				s *= 2;
+			}
+			line(x1, y1, x2, y2);
+		} else {
+			strokeWeight(s * 2);
+			if (y1 == y2) { //horizontal
+				for (let x = min(x1, x2); x <= max(x1, x2); x += gridx) {
+					point(x, y1);
+				}
+			} else {
+				for (let y = min(y1, y2); y <= max(y1, y2); y += gridy) {
+					point(x1, y);
+				}
+			}
+		}
+
+		if (d) {
+			strokeWeight(s * 2);
+			point(x1, y1);
+			point(x2, y2);
+		}
+	}
+}
+
+function circles() {
+	push();
+	blendMode(MULTIPLY)
+	ellipseMode(CORNER);
+	let c = random(palette);
+	fill(c);
+	stroke(c);
+	strokeWeight(0.2)
+	let w = floor(random(1, 4));
+	let h = floor(random(1, 4));
+	let x = floor(random(1, xm - w));
+	let y = floor(random(1, ym - h));
+
+	x *= gridx;
+	y *= gridy;
+	w *= gridx;
+	h *= gridy;
+
+	circle(x, y, min(w, h))
+	pop();
+}
+
+function granulate(gA) {
+	let gc = createGraphics(width, height);
+	gc.background(127);
+	gc.loadPixels();
+	let d = gc.pixelDensity();
+	let halfImage = 4 * (width * d) * (height * d);
+	for (let ii = 0; ii < halfImage; ii += 4) { // noprotect
+		grainAmount = random(-gA, gA);
+		gc.pixels[ii] = gc.pixels[ii] + gA;
+		gc.pixels[ii + 1] = gc.pixels[ii + 1] + grainAmount;
+		gc.pixels[ii + 2] = gc.pixels[ii + 2] + grainAmount;
+		gc.pixels[ii + 3] = gc.pixels[ii + 3] + gA;
+	}
+	gc.updatePixels();
+	return gc;
+}
