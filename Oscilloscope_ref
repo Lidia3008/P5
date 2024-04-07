@@ -1,0 +1,81 @@
+let t = 0;
+let t_inc = .3;
+const points = [];
+let mic;
+let useMic = false;
+
+let mx, my;
+
+function setup() {
+  createCanvas(500, 500);
+  mic = new p5.AudioIn();
+  mic.start();
+}
+
+function draw() {
+  background(0);
+  
+  volume = mic.getLevel() * 100;
+  // console.log(volume)
+  
+  y = width / 2  * noise(0.005 * frameCount) + 200;
+  x = height / 2  * noise(0.005 * frameCount) + 200;
+
+  let multiplier = useMic ? volume : 3;
+  
+  y += 100 * sin(multiplier * frameCount + PI / 2)
+  x += 100 * sin(2 * t / 50 * t)
+
+  points.push(new Point(x, y));
+  
+  drawPoints()
+  
+  //keep the array short, otherwise it runs very slow
+  if (points.length > 30) {
+     points.shift();
+  }
+  
+  t += t_inc;
+  console.log(t_inc)
+}
+
+function drawPoints() {
+  noFill()
+  strokeWeight(2);
+  stroke(58, 240, 212)
+  beginShape()
+  for (i=0; i<points.length; i++) {
+    curveVertex(points[i].x, points[i].y)
+  }
+  endShape()
+}
+
+function Point(x, y) {
+  this.x = x
+  this.y = y
+}
+
+function mousePressed() {
+  useMic = !useMic;
+  mx = mouseX;
+  my = mouseY;
+}
+
+function mouseWheel(event) {
+  change = abs(event.delta);
+
+  if (event.delta < 0) {
+    change = map(change, 1, 10, 0.01, 0.04)
+  } else {
+    change = map(change, 1, 10, -0.01, -0.04)
+  }
+  t_inc += change
+  
+  if (t_inc < 0) {
+    t_inc = .001;
+  }
+  if (t_inc > 1.5) {
+    t_inc = 1.5;
+  }
+  return false;
+}
